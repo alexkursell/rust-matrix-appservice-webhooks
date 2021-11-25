@@ -15,6 +15,7 @@ use matrix_sdk::{
 
 use matrix_sdk_appservice::{AppService, AppServiceRegistration};
 use tokio::sync::oneshot;
+use uuid::Uuid;
 use warp::Filter;
 
 mod bot;
@@ -95,11 +96,15 @@ fn generate_registration(
     .users
     .push(Namespace::new(true, "@_webhook.*".into()));
   RegistrationInit {
-    id: "webhooks".into(),
+    id: Uuid::new_v4().to_string(),
     url: url.to_string(),
-    hs_token: "A_RANDOM_ALPHANUMERIC_STRING".into(),
-    as_token: "ANOTHER_RANDOM_ALPHANUMERIC_STRING".into(),
-    sender_localpart: config.webhook_bot.localpart.clone(),
+    hs_token: Uuid::new_v4().to_string(),
+    as_token: Uuid::new_v4().to_string(),
+    sender_localpart: if let Some(localpart) = localpart {
+      localpart.clone()
+    } else {
+      config.webhook_bot.localpart.clone()
+    },
     namespaces: namespaces,
     rate_limited: Some(false),
     protocols: None,

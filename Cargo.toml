@@ -11,7 +11,7 @@ matrix-sdk = { git = "https://github.com/matrix-org/matrix-rust-sdk/", tag = "ma
 serde_yaml = "0.8.21"
 serde = "1.0.130"
 anyhow = "1.0.44"
-clap = "3.0.0-beta.4"
+clap = "3.0.0-beta.5"
 tokio = {version = "1.12.0", features = ["rt-multi-thread", "macros", "signal"] }
 serde_json = "1.0.68"
 reqwest = "0.11.4"
@@ -19,7 +19,7 @@ mime = "0.3.16"
 warp = { git = "https://github.com/seanmonstar/warp.git", rev = "629405", default-features = false }
 scraper = "0.12.0"
 lazy_static = "1.4.0"
-sqlx = {version = "0.5.7", features = [ "runtime-tokio-native-tls", "sqlite" ] }
+sqlx = {version = "0.5.9", features = [ "runtime-tokio-native-tls", "sqlite" ] }
 randid = "0.1.0"
 sha2 = "0.9.8"
 hex = "0.4.3"

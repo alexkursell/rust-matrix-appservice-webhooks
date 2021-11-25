@@ -1,7 +1,7 @@
 use std::{fs::File, net::IpAddr, str::FromStr, sync::Arc};
 
 use anyhow::{anyhow, Context, Result};
-use clap::Clap;
+use clap::Parser;
 use log::*;
 use matrix_sdk::{
   room::Room,
@@ -25,7 +25,7 @@ mod store;
 mod webhook;
 mod webhook_request;
 
-#[derive(Debug, Clap)]
+#[derive(Debug, Parser)]
 #[clap(
   version = "0.1.0",
   author = "Alex Kursell <alex@awk.run>",

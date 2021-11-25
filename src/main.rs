@@ -150,7 +150,7 @@ async fn main() -> Result<()> {
   };
 
   // The handler needs the webhook id from the path, the config object, the appservice object
-  // and a database connection (TODO)
+  // and a database connection
   let webhook_filter = warp::path!("api" / "v1" / "matrix" / "hook" / String)
     .and(warp::filters::method::post())
     .and(warp::filters::body::json())

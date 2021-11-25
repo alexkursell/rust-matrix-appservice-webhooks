@@ -56,7 +56,7 @@ async fn handler_inner(
   store: Arc<Store>,
 ) -> Result<()> {
   debug!("Received webhook for id {}", webhook_id);
-  let hook = match store.get_webhook_by_id(&webhook_id).await? {
+  let hook = match store.get_webhook_by_id(webhook_id).await? {
     Some(hook) => hook,
     None => return Err(anyhow::anyhow!("Could not find webhook")),
   };
@@ -86,7 +86,7 @@ async fn handler_inner(
       .await?;
     let room = bot_client
       .get_joined_room(&room_id)
-      .map_or(Err(anyhow!("Couldn't get joined room from bot")), |r| Ok(r))?;
+      .map_or(Err(anyhow!("Couldn't get joined room from bot")), Ok)?;
 
     room
       .invite_user_by_id(&UserId::parse_with_server_name(

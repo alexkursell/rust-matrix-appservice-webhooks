@@ -9,7 +9,7 @@ lazy_static! {
 }
 
 pub fn replace_emoji(s: &str) -> String {
-  let mut parts: Vec<String> = s.split(":").map(|s| s.to_owned()).collect();
+  let mut parts: Vec<String> = s.split(':').map(|s| s.to_owned()).collect();
   let mut out = vec![];
 
   let num_parts = parts.len();
@@ -25,7 +25,7 @@ pub fn replace_emoji(s: &str) -> String {
     }
 
     if let Some(replace) = EMOJI.get(part) {
-      out.push(&replace);
+      out.push(replace);
       skip = true;
     } else {
       out.push(":");

@@ -164,7 +164,7 @@ async fn handle_room_message_inner(
     .context("Failed to get or create admin room")?;
   let admin_room = match client.get_joined_room(&admin_room_id) {
     Some(room) => room,
-    None => Err(anyhow!("Failed to get the room that we should be inside"))?,
+    None => return Err(anyhow!("Failed to get the room that we should be inside")),
   };
 
   let hook = store
@@ -268,7 +268,7 @@ async fn download_avatar(url: &str) -> anyhow::Result<(mime::Mime, Vec<u8>)> {
   let response = response.error_for_status()?;
   let mime_raw = match response.headers().get(reqwest::header::CONTENT_TYPE) {
     Some(mime) => mime,
-    None => Err(anyhow!("Server did not return a Content-Type header"))?,
+    None => return Err(anyhow!("Server did not return a Content-Type header")),
   };
 
   let mime: mime::Mime = mime_raw
@@ -278,8 +278,8 @@ async fn download_avatar(url: &str) -> anyhow::Result<(mime::Mime, Vec<u8>)> {
     .context("Could not parse Content-Type into a mime type")?;
 
   let body = response.bytes().await?;
-  if body.len() <= 0 {
-    return Err(anyhow!("Avatar request returned empty"))?;
+  if body.is_empty() {
+    return Err(anyhow!("Avatar request returned empty"));
   }
 
   Ok((mime, body.to_vec()))

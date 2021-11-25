@@ -105,7 +105,7 @@ fn generate_registration(
     } else {
       config.webhook_bot.localpart.clone()
     },
-    namespaces: namespaces,
+    namespaces,
     rate_limited: Some(false),
     protocols: None,
   }

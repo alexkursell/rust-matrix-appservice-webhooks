@@ -9,13 +9,17 @@ pub struct WebhookRequest {
   text: String,
   format: Format,
   #[serde(rename = "displayName")]
-  pub display_name: String,
+  display_name: Option<String>,
   #[serde(rename = "avatarUrl")]
-  pub avatar_url: String,
+  avatar_url: Option<String>,
   #[serde(default = "return_true")]
   emoji: bool,
   #[serde(default, rename = "msgtype")]
   message_type: MsgType,
+
+  // Slack-compatible fields
+  icon_url: Option<String>,
+  username: Option<String>,
 }
 
 #[derive(Debug, PartialEq, Deserialize)]
@@ -63,6 +67,31 @@ impl WebhookRequest {
     }
   }
 
+  pub fn get_display_name(&self) -> String {
+    let name = if let Some(name) = self.display_name.clone() {
+      name
+    } else if let Some(name) = self.username.clone() {
+      name
+    } else {
+      "Incoming Webhook".to_string()
+    };
+    if self.emoji {
+      emoji::replace_emoji(&name)
+    } else {
+      name
+    }
+  }
+
+  pub fn get_avatar_url(&self) -> Option<String> {
+    if let Some(url) = self.avatar_url.clone() {
+      Some(url)
+    } else if let Some(url) = self.icon_url.clone() {
+      Some(url)
+    } else {
+      None
+    }
+  }
+
   fn parse_text(&self) -> String {
     if self.emoji {
       emoji::replace_emoji(&self.text)
@@ -107,10 +136,12 @@ mod tests {
     let expected = WebhookRequest {
       text: "Hello world!".into(),
       format: Format::Plain,
-      display_name: "My Cool Webhook".into(),
-      avatar_url: "http://i.imgur.com/IDOBtEJ.png".into(),
+      display_name: Some("My Cool Webhook".into()),
+      avatar_url: Some("http://i.imgur.com/IDOBtEJ.png".into()),
       emoji: true,
       message_type: MsgType::Regular,
+      icon_url: None,
+      username: None,
     };
 
     let parsed = serde_json::from_str::<WebhookRequest>(raw_json)?;
@@ -220,7 +251,7 @@ mod tests {
       "text": "<b>foo:heart::heart:</b> <br><ol><li>aa</li> <li>bb</li></ol>",
       "format": "html",
       "msgtype": "emote",
-      "displayName": "My Cool Webhook",
+      "displayName": "My Cool Webhook :heart:",
       "avatarUrl": "https://i.imgur.com/IDOBtEJ.png"
   }"#;
 
@@ -238,7 +269,27 @@ mod tests {
       formatted.body,
       "<b>foo❤️❤️</b> <br><ol><li>aa</li> <li>bb</li></ol>"
     );
+    assert_eq!(parsed.get_display_name(), "My Cool Webhook ❤️");
 
+    Ok(())
+  }
+
+  #[test]
+  fn test_slack_like() -> Result<()> {
+    let raw_json = r#"
+    {
+      "text": "foo",
+      "format": "html",
+      "username": "My Cool Webhook :heart:",
+      "icon_url": "https://i.imgur.com/IDOBtEJ.png"
+  }"#;
+
+    let parsed = serde_json::from_str::<WebhookRequest>(raw_json)?;
+    assert_eq!(parsed.get_display_name(), "My Cool Webhook ❤️");
+    assert_eq!(
+      parsed.get_avatar_url().unwrap(),
+      "https://i.imgur.com/IDOBtEJ.png"
+    );
     Ok(())
   }
 }

@@ -70,8 +70,8 @@ async fn handler_inner(
 
   let client = bot::register_bot(
     &bot_localpart,
-    &body.display_name,
-    &body.avatar_url,
+    &body.get_display_name(),
+    &body.get_avatar_url(),
     appservice.clone(),
   )
   .await?;

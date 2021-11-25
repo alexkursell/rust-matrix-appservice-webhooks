@@ -179,7 +179,7 @@ async fn main() -> Result<()> {
   let client = bot::register_bot(
     &config.webhook_bot.localpart,
     &config.webhook_bot.appearance.display_name,
-    &config.webhook_bot.appearance.avatar_url,
+    &Some(config.webhook_bot.appearance.avatar_url.clone()),
     appservice.clone(),
   )
   .await

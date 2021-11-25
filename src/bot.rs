@@ -82,7 +82,7 @@ pub async fn handle_room_message(
 pub async fn register_bot(
   localpart: &str,
   display_name: &str,
-  avatar_url: &str,
+  avatar_url: &Option<String>,
   appservice: AppService,
 ) -> anyhow::Result<Client> {
   info!("Registering the webhook bot with the homeserver");
@@ -102,32 +102,34 @@ pub async fn register_bot(
     debug!("Skipping set username for {}", localpart);
   }
 
-  // Update the avatar if changed or if we don't remember setting it successfully
-  let cached_avatar_url = USER_AVATAR_CACHE.get(localpart);
-  if cached_avatar_url.is_none() || cached_avatar_url.unwrap().value() != avatar_url {
-    info!("Need to download avatar for {}", localpart);
-    match download_avatar(avatar_url).await {
-      Ok((avatar_mime, avatar_bytes)) => {
-        let mut slice = avatar_bytes.as_slice();
-        let old_avatar_bytes = client.avatar(MediaFormat::File).await?;
-        if old_avatar_bytes.is_none() || (old_avatar_bytes.unwrap().as_slice() != slice) {
-          client
-            .upload_avatar(&avatar_mime, &mut slice)
-            .await
-            .context("Failed to upload fetched avatar to homeserver")?;
+  // Update the avatar if set, and if changed or if we don't remember setting it successfully
+  if let Some(avatar_url) = avatar_url {
+    let cached_avatar_url = USER_AVATAR_CACHE.get(localpart);
+    if cached_avatar_url.is_none() || cached_avatar_url.unwrap().value() != avatar_url {
+      info!("Need to download avatar for {}", localpart);
+      match download_avatar(avatar_url).await {
+        Ok((avatar_mime, avatar_bytes)) => {
+          let mut slice = avatar_bytes.as_slice();
+          let old_avatar_bytes = client.avatar(MediaFormat::File).await?;
+          if old_avatar_bytes.is_none() || (old_avatar_bytes.unwrap().as_slice() != slice) {
+            client
+              .upload_avatar(&avatar_mime, &mut slice)
+              .await
+              .context("Failed to upload fetched avatar to homeserver")?;
+          }
         }
-      }
-      Err(e) => {
-        warn!(
-          "Failed to download bot avatar from {}: {}",
-          avatar_url,
-          e.to_string()
-        );
-      }
-    };
-    USER_AVATAR_CACHE.insert(localpart.to_string(), avatar_url.to_string());
-  } else {
-    debug!("Skipping avatar download for {}", localpart);
+        Err(e) => {
+          warn!(
+            "Failed to download bot avatar from {}: {}",
+            avatar_url,
+            e.to_string()
+          );
+        }
+      };
+      USER_AVATAR_CACHE.insert(localpart.to_string(), avatar_url.to_string());
+    } else {
+      debug!("Skipping avatar download for {}", localpart);
+    }
   }
 
   Ok(client)

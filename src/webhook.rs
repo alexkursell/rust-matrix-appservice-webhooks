@@ -33,7 +33,7 @@ pub async fn handler(
   )
   .await;
   Ok(match res {
-    Ok(_) => Box::new("OK"),
+    Ok(_) => Box::new(warp::reply::json(&serde_json::json!({"success": true}))),
     Err(e) => {
       error!(
         "Error responding to webhook request with id {}: {}",
@@ -41,8 +41,8 @@ pub async fn handler(
         e.to_string()
       );
       Box::new(warp::reply::with_status(
-        e.to_string(),
-        http::status::StatusCode::BAD_REQUEST,
+        warp::reply::json(&serde_json::json!({"success": false, "message": e.to_string()})),
+        http::status::StatusCode::INTERNAL_SERVER_ERROR,
       ))
     }
   })

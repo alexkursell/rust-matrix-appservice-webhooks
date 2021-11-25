@@ -28,7 +28,16 @@ use matrix_sdk_appservice::{
   AppService, Result,
 };
 
+use dashmap::DashMap;
+use lazy_static::lazy_static;
 use log::*;
+
+// Avoid uneccesarily downloading/uploading avatars or setting display names
+// on every single message
+lazy_static! {
+  static ref USER_AVATAR_CACHE: Arc<DashMap<String, String>> = Arc::new(DashMap::new());
+  static ref USER_DISPLAY_NAME_CACHE: Arc<DashMap<String, String>> = Arc::new(DashMap::new());
+}
 
 pub async fn handle_room_member(
   config: Arc<config::Config>,
@@ -80,31 +89,46 @@ pub async fn register_bot(
   appservice.register_virtual_user(localpart).await?;
   let client = appservice.virtual_user_client(localpart).await?;
 
-  client
-    .set_display_name(Some(display_name))
-    .await
-    .context("Failed to set bot display name")?;
+  let cached_display_name = USER_DISPLAY_NAME_CACHE.get(localpart);
+  if cached_display_name.is_none() || cached_display_name.unwrap().value() != display_name {
+    info!("Need to set display name for {}", localpart);
+    client
+      .set_display_name(Some(display_name))
+      .await
+      .context("Failed to set bot display name")?;
 
-  // Allow updating the avatar to fail
-  match download_avatar(avatar_url).await {
-    Ok((avatar_mime, avatar_bytes)) => {
-      let mut slice = avatar_bytes.as_slice();
-      let old_avatar_bytes = client.avatar(MediaFormat::File).await?;
-      if old_avatar_bytes.is_none() || (old_avatar_bytes.unwrap().as_slice() != slice) {
-        client
-          .upload_avatar(&avatar_mime, &mut slice)
-          .await
-          .context("Failed to upload fetched avatar to homeserver")?;
+    USER_DISPLAY_NAME_CACHE.insert(localpart.to_string(), display_name.to_string());
+  } else {
+    debug!("Skipping set username for {}", localpart);
+  }
+
+  // Update the avatar if changed or if we don't remember setting it successfully
+  let cached_avatar_url = USER_AVATAR_CACHE.get(localpart);
+  if cached_avatar_url.is_none() || cached_avatar_url.unwrap().value() != avatar_url {
+    info!("Need to download avatar for {}", localpart);
+    match download_avatar(avatar_url).await {
+      Ok((avatar_mime, avatar_bytes)) => {
+        let mut slice = avatar_bytes.as_slice();
+        let old_avatar_bytes = client.avatar(MediaFormat::File).await?;
+        if old_avatar_bytes.is_none() || (old_avatar_bytes.unwrap().as_slice() != slice) {
+          client
+            .upload_avatar(&avatar_mime, &mut slice)
+            .await
+            .context("Failed to upload fetched avatar to homeserver")?;
+        }
       }
-    }
-    Err(e) => {
-      warn!(
-        "Failed to download bot avatar from {}: {}",
-        avatar_url,
-        e.to_string()
-      );
-    }
-  };
+      Err(e) => {
+        warn!(
+          "Failed to download bot avatar from {}: {}",
+          avatar_url,
+          e.to_string()
+        );
+      }
+    };
+    USER_AVATAR_CACHE.insert(localpart.to_string(), avatar_url.to_string());
+  } else {
+    debug!("Skipping avatar download for {}", localpart);
+  }
 
   Ok(client)
 }
@@ -236,6 +260,7 @@ async fn handle_room_member_inner(
 }
 
 async fn download_avatar(url: &str) -> anyhow::Result<(mime::Mime, Vec<u8>)> {
+  info!("Downloading avatar at {}", url);
   let response = reqwest::get(url)
     .await
     .context("Failed to fetch avatar from provided url")?;

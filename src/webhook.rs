@@ -55,6 +55,7 @@ async fn handler_inner(
   appservice: AppService,
   store: Arc<Store>,
 ) -> Result<()> {
+  debug!("Received webhook for id {}", webhook_id);
   let hook = match store.get_webhook_by_id(&webhook_id).await? {
     Some(hook) => hook,
     None => return Err(anyhow::anyhow!("Could not find webhook")),
@@ -75,6 +76,7 @@ async fn handler_inner(
   )
   .await?;
 
+  // May be over-cautious
   client.sync_once(SyncSettings::default()).await?;
 
   // Have the bot invite the webhook to the room only if it's not already joined

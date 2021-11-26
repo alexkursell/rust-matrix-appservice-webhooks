@@ -7,8 +7,10 @@ without any migration. The differences are documented below.
 
 ## Building
 
-`cargo build`, or `cargo build --release`. May require a few dependencies (`cmake`, a C compiler and linker).
+`cargo build`, or `cargo build --release`. May require a few dependencies (`cmake`, `openssl`, a C++ compiler and linker).
 Will output the binary to `target/(debug|release)/rust-matrix-appservice-webhooks`.
+
+The docker image can be built with `docker build .`
 
 ## Usage
 
@@ -43,7 +45,10 @@ where `<PORT>` matches the url in `appservice.yaml`.
 - Ignores the `logging:` section of the config file. `stdout` or bust! You can set the logging level using
     `RUST_LOG`.
 - No provisioning API, and so it ignores the `provisioning:` section of the config file.
-- At least some of the webhook syntax is missing (like attachments), or produces different output.
+- At least some of the webhook syntax is missing (like attachments), or produces different output. At least the following are known to be missing:
+    - Slack link syntax
+    - Emoji avatars
+    - Attachments
 - Probably other features, and bugs.
 
 ## Improvements
@@ -57,7 +62,6 @@ where `<PORT>` matches the url in `appservice.yaml`.
 ## TODOs
 
 - Testing with Synapse. I only run Dendrite myself, so I don't know if it works with Synapse yet.
-- Add a Dockerfile, and maybe publish the image to Dockerhub for ease of use.
 - Possibly reach feature parity with the original.
 
 ## End-to-end encryption

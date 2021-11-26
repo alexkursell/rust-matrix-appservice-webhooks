@@ -39,8 +39,7 @@ where `<PORT>` matches the url in `appservice.yaml`.
 
 ## Differences
 
-- Requires a flag (`-d`/`--database-path`) to describe the location of the sqlite database, instead of
-    the implicit default of the node version.
+- Requires a flag (`-d`/`--database-path`) to describe the location of the sqlite database.
     Bonus: for testing, you can set this to `sqlite::memory:` to use a temporary in-memory data store.
 - Ignores the `logging:` section of the config file. `stdout` or bust! You can set the logging level using
     `RUST_LOG`.

@@ -85,10 +85,8 @@ impl WebhookRequest {
   pub fn get_avatar_url(&self) -> Option<String> {
     if let Some(url) = self.avatar_url.clone() {
       Some(url)
-    } else if let Some(url) = self.icon_url.clone() {
-      Some(url)
     } else {
-      None
+      self.icon_url.clone()
     }
   }
 
